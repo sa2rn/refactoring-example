@@ -1,0 +1,14 @@
+verify_signatures: false
+
+CommitMsg:
+  ALL:
+    on_warn: fail
+
+PreCommit:
+  RuboCop:
+    enabled: true
+    on_warn: fail
+
+  Fasterer:
+    enabled: true
+    on_warn: fail
