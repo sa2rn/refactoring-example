@@ -82,15 +82,18 @@ RSpec.describe Account do
   CARDS = {
     usual: {
       type: 'usual',
-      balance: 50.00
+      balance: 50.00,
+      class: UsualCard
     },
     capitalist: {
       type: 'capitalist',
-      balance: 100.00
+      balance: 100.00,
+      class: CapitalistCard
     },
     virtual: {
       type: 'virtual',
-      balance: 150.00
+      balance: 150.00,
+      class: VirtualCard
     }
   }.freeze
 
@@ -485,9 +488,9 @@ RSpec.describe Account do
 
           expect(File.exist?(OVERRIDABLE_FILENAME)).to be true
           file_accounts = YAML.load_file(OVERRIDABLE_FILENAME)
-          expect(file_accounts.first.card.first[:type]).to eq card_info[:type]
-          expect(file_accounts.first.card.first[:balance]).to eq card_info[:balance]
-          expect(file_accounts.first.card.first[:number].length).to be 16
+          expect(file_accounts.first.card.first).to be_instance_of(card_info[:class])
+          expect(file_accounts.first.card.first.balance).to eq card_info[:balance]
+          expect(file_accounts.first.card.first.number.length).to be 16
         end
       end
     end

@@ -1,5 +1,9 @@
 require 'yaml'
 require 'pry'
+require_relative 'entities/card'
+require_relative 'entities/capitalist_card'
+require_relative 'entities/usual_card'
+require_relative 'entities/virtual_card'
 
 class Account
   attr_accessor :login, :name, :card, :password, :file_path
@@ -134,23 +138,11 @@ class Account
       if %w[usual capitalist virtual].include?(ct)
         case ct
         when 'usual'
-          card = {
-            type: 'usual',
-            number: 16.times.map { rand(10) }.join,
-            balance: 50.00
-          }
+          card = UsualCard.new
         when 'capitalist'
-          card = {
-            type: 'capitalist',
-            number: 16.times.map { rand(10) }.join,
-            balance: 100.00
-          }
+          card = CapitalistCard.new
         when 'virtual'
-          card = {
-            type: 'virtual',
-            number: 16.times.map { rand(10) }.join,
-            balance: 150.00
-          }
+          card = VirtualCard.new
         end
         cards = @current_account.card << card
         @current_account.card = cards # important!!!
