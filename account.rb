@@ -1,9 +1,13 @@
 require 'yaml'
 require 'pry'
+require 'i18n'
+
 require_relative 'entities/card'
 require_relative 'entities/capitalist_card'
 require_relative 'entities/usual_card'
 require_relative 'entities/virtual_card'
+
+I18n.load_path << Dir["#{File.expand_path('config/locales', __dir__)}/*.yml"]
 
 class Account
   attr_accessor :login, :name, :card, :password, :file_path
@@ -14,10 +18,7 @@ class Account
   end
 
   def console
-    puts 'Hello, we are RubyG bank!'
-    puts '- If you want to create account - press `create`'
-    puts '- If you want to load account - press `load`'
-    puts '- If you want to exit - press `exit`'
+    puts I18n.t('hello')
 
     # FIRST SCENARIO. IMPROVEMENT NEEDED
 
@@ -58,9 +59,9 @@ class Account
     loop do
       return create_the_first_account unless accounts.any?
 
-      puts 'Enter your login'
+      puts I18n.t('enter_login')
       login = gets.chomp
-      puts 'Enter your password'
+      puts I18n.t('enter_password')
       password = gets.chomp
 
       if accounts.map { |a| { login: a.login, password: a.password } }.include?({ login: login, password: password })
@@ -86,16 +87,7 @@ class Account
 
   def main_menu
     loop do
-      puts "\nWelcome, #{@current_account.name}"
-      puts 'If you want to:'
-      puts '- show all cards - press SC'
-      puts '- create card - press CC'
-      puts '- destroy card - press DC'
-      puts '- put money on card - press PM'
-      puts '- withdraw money on card - press WM'
-      puts '- send money to another card  - press SM'
-      puts '- destroy account - press `DA`'
-      puts '- exit from account - press `exit`'
+      puts I18n.t('account_menu', name: @current_account.name)
 
       command = gets.chomp
 
@@ -121,18 +113,14 @@ class Account
           break
         end
       else
-        puts "Wrong command. Try again!\n"
+        puts I18n.t('errors.wrong_command')
       end
     end
   end
 
   def create_card
     loop do
-      puts 'You could create one of 3 card types'
-      puts '- Usual card. 2% tax on card INCOME. 20$ tax on SENDING money from this card. 5% tax on WITHDRAWING money. For creation this card - press `usual`'
-      puts '- Capitalist card. 10$ tax on card INCOME. 10% tax on SENDING money from this card. 4$ tax on WITHDRAWING money. For creation this card - press `capitalist`'
-      puts '- Virtual card. 1$ tax on card INCOME. 1$ tax on SENDING money from this card. 12% tax on WITHDRAWING money. For creation this card - press `virtual`'
-      puts '- For exit - press `exit`'
+      puts I18n.t('create_card_menu')
 
       ct = gets.chomp
       if %w[usual capitalist virtual].include?(ct)
@@ -168,14 +156,14 @@ class Account
         puts 'If you want to delete:'
 
         @current_account.card.each_with_index do |c, i|
-          puts "- #{c[:number]}, #{c[:type]}, press #{i + 1}"
+          puts "- #{c.number}, #{c.type}, press #{i + 1}"
         end
         puts "press `exit` to exit\n"
         answer = gets.chomp
         break if answer == 'exit'
 
         if answer&.to_i.to_i <= @current_account.card.length && answer&.to_i.to_i.positive?
-          puts "Are you sure you want to delete #{@current_account.card[answer&.to_i.to_i - 1][:number]}?[y/n]"
+          puts "Are you sure you want to delete #{@current_account.card[answer&.to_i.to_i - 1].number}?[y/n]"
           a2 = gets.chomp
           if a2 == 'y'
             @current_account.card.delete_at(answer&.to_i.to_i - 1)
@@ -205,7 +193,7 @@ class Account
   def show_cards
     if @current_account.card.any?
       @current_account.card.each do |c|
-        puts "- #{c[:number]}, #{c[:type]}"
+        puts "- #{c.number}, #{c.type}"
       end
     else
       puts "There is no active cards!\n"
@@ -217,7 +205,7 @@ class Account
     answer, a2, a3 = nil # answers for gets.chomp
     if @current_account.card.any?
       @current_account.card.each_with_index do |c, i|
-        puts "- #{c[:number]}, #{c[:type]}, press #{i + 1}"
+        puts "- #{c.number}, #{c.type}, press #{i + 1}"
       end
       puts "press `exit` to exit\n"
       loop do
@@ -230,11 +218,8 @@ class Account
             puts 'Input the amount of money you want to withdraw'
             a2 = gets.chomp
             if a2&.to_i.to_i.positive?
-              money_left = current_card[:balance] - a2&.to_i.to_i - withdraw_tax(current_card[:type],
-                                                                                 current_card[:balance], current_card[:number], a2&.to_i.to_i)
-              if money_left.positive?
-                current_card[:balance] = money_left
-                @current_account.card[answer&.to_i.to_i - 1] = current_card
+              begin
+                current_card.withdraw_money(a2&.to_i.to_i)
                 new_accounts = []
                 accounts.each do |ac|
                   if ac.login == @current_account.login
@@ -244,12 +229,9 @@ class Account
                   end
                 end
                 File.open(@file_path, 'w') { |f| f.write new_accounts.to_yaml } # Storing
-                puts "Money #{a2&.to_i.to_i} withdrawed from #{current_card[:number]}$. Money left: #{current_card[:balance]}$. Tax: #{withdraw_tax(
-                  current_card[:type], current_card[:balance], current_card[:number], a2&.to_i.to_i
-                )}$"
-                return
-              else
-                puts "You don't have enough money on card for such operation"
+                puts "Money #{a2&.to_i.to_i} withdrawed from #{current_card.number}$. Money left: #{current_card.balance}$. Tax: #{current_card.withdraw_tax(a2&.to_i.to_i)}$"
+              rescue NotEnoughMoneyError => e
+                puts e.message
                 return
               end
             else
@@ -272,7 +254,7 @@ class Account
 
     if @current_account.card.any?
       @current_account.card.each_with_index do |c, i|
-        puts "- #{c[:number]}, #{c[:type]}, press #{i + 1}"
+        puts "- #{c.number}, #{c.type}, press #{i + 1}"
       end
       puts "press `exit` to exit\n"
       loop do
@@ -285,14 +267,11 @@ class Account
             puts 'Input the amount of money you want to put on your card'
             a2 = gets.chomp
             if a2&.to_i.to_i.positive?
-              if put_tax(current_card[:type], current_card[:balance], current_card[:number],
-                         a2&.to_i.to_i) >= a2&.to_i.to_i
+              if current_card.put_tax(a2&.to_i.to_i) >= a2&.to_i.to_i
                 puts 'Your tax is higher than input amount'
                 return
               else
-                new_money_amount = current_card[:balance] + a2&.to_i.to_i - put_tax(current_card[:type],
-                                                                                    current_card[:balance], current_card[:number], a2&.to_i.to_i)
-                current_card[:balance] = new_money_amount
+                current_card.put_money(a2&.to_i.to_i)
                 @current_account.card[answer&.to_i.to_i - 1] = current_card
                 new_accounts = []
                 accounts.each do |ac|
@@ -303,9 +282,7 @@ class Account
                   end
                 end
                 File.open(@file_path, 'w') { |f| f.write new_accounts.to_yaml } # Storing
-                puts "Money #{a2&.to_i.to_i} was put on #{current_card[:number]}. Balance: #{current_card[:balance]}. Tax: #{put_tax(
-                  current_card[:type], current_card[:balance], current_card[:number], a2&.to_i.to_i
-                )}"
+                puts "Money #{a2&.to_i.to_i} was put on #{current_card.number}. Balance: #{current_card.balance}. Tax: #{current_card.put_tax(a2&.to_i.to_i)}"
                 return
               end
             else
@@ -328,7 +305,7 @@ class Account
 
     if @current_account.card.any?
       @current_account.card.each_with_index do |c, i|
-        puts "- #{c[:number]}, #{c[:type]}, press #{i + 1}"
+        puts "- #{c.number}, #{c.type}, press #{i + 1}"
       end
       puts "press `exit` to exit\n"
       answer = gets.chomp
@@ -469,44 +446,5 @@ class Account
     else
       []
     end
-  end
-
-  def withdraw_tax(type, _balance, _number, amount)
-    case type
-    when 'usual'
-      return amount * 0.05
-    when 'capitalist'
-      return amount * 0.04
-    when 'virtual'
-      return amount * 0.88
-    end
-
-    0
-  end
-
-  def put_tax(type, _balance, _number, amount)
-    case type
-    when 'usual'
-      return amount * 0.02
-    when 'capitalist'
-      return 10
-    when 'virtual'
-      return 1
-    end
-
-    0
-  end
-
-  def sender_tax(type, _balance, _number, amount)
-    case type
-    when 'usual'
-      return 20
-    when 'capitalist'
-      return amount * 0.1
-    when 'virtual'
-      return 1
-    end
-
-    0
   end
 end

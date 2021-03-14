@@ -1,8 +1,13 @@
 class Card
-  attr_reader :number, :balance
+  attr_reader :balance
 
-  def initialize
+  def initialize(balance)
+    @balance = balance
     @number = 16.times.map { rand(10) }.join
+  end
+
+  def number
+    @number ||= 16.times.map { rand(10) }.join
   end
 
   def withdraw_money(amount)
@@ -18,39 +23,39 @@ class Card
     recipient.put_money(amount)
   end
 
-  protected
-
-  def withdraw_tax_percent
+  def type
     raise NotImplementedError
   end
-
-  def put_tax_percent
-    raise NotImplementedError
-  end
-
-  def put_tax_fixed
-    raise NotImplementedError
-  end
-
-  def sender_tax_percent
-    raise NotImplementedError
-  end
-
-  def sender_tax_fixed
-    raise NotImplementedError
-  end
-
-  private
 
   def withdraw_tax(amount)
     amount * withdraw_tax_percent / 100.0
   end
 
-  def put_tax
+  def put_tax(amount)
     amount * put_tax_percent / 100.0 + put_tax_fixed
   end
 
-  def sender_tax
+  def sender_tax(amount)
     amount * sender_tax_percent / 100.0 + sender_tax_fixed
+  end
+
+  def withdraw_tax_percent
+    0
+  end
+
+  def put_tax_percent
+    0
+  end
+
+  def put_tax_fixed
+    0
+  end
+
+  def sender_tax_percent
+    0
+  end
+
+  def sender_tax_fixed
+    0
   end
 end
