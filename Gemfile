@@ -1,22 +1,20 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
+git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-gem 'i18n', '~> 1.8'
 
 group :development do
-  gem 'fasterer', '~> 0.9.0'
-  gem 'overcommit', '~> 0.57.0'
-  gem 'pry', '~> 0.14.0'
-  gem 'rubocop', '~> 1.11'
-  gem 'rubocop-rspec', '~> 2.2'
+  gem 'fasterer'
+  gem 'pry'
+  gem 'rubocop'
+  gem 'rubocop-rspec'
 end
 
 group :test do
-  gem 'rspec', '~> 3.10'
-  gem 'simplecov', '~> 0.21.2'
-  gem 'simplecov-lcov', '~> 0.8.0'
-  gem 'undercover', '~> 0.4.0'
+  gem "rspec", "~> 3.8"
+  gem 'simplecov'
+  gem 'simplecov-lcov'
+  gem 'undercover'
 end
