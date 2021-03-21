@@ -1,8 +1,5 @@
 require: rubocop-rspec
 
-AllCops:
-  NewCops: enable
-
 RSpec/MessageChain:
   Enabled: false
 
@@ -23,8 +20,11 @@ Metrics/BlockLength:
     - 'Gemfile'
     - 'spec/**/*.rb'
 
-Style/Documentation:
+Metrics/LineLength:
+  Max: 120
+
+Documentation:
   Enabled: false
 
-Style/FrozenStringLiteralComment:
+FrozenStringLiteralComment:
   Enabled: false
