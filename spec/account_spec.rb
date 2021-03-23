@@ -1,4 +1,4 @@
-RSpec.describe Account do
+RSpec.describe AccountConsole do
   OVERRIDABLE_FILENAME = 'spec/fixtures/account.yml'.freeze
 
   COMMON_PHRASES = {
@@ -11,7 +11,7 @@ RSpec.describe Account do
     withdraw_amount: 'Input the amount of money you want to withdraw'
   }.freeze
 
-  HELLO_PHRASES = <<~HELLO
+  HELLO_PHRASES = <<~HELLO.freeze
     Hello, we are RubyG bank!
     - If you want to create account - press `create`
     - If you want to load account - press `load`
@@ -25,7 +25,7 @@ RSpec.describe Account do
     age: 'Enter your age'
   }.freeze
 
-  CREATE_CARD_PHRASES = <<~CREATE_CARD
+  CREATE_CARD_PHRASES = <<~CREATE_CARD.freeze
     You could create one of 3 card types
     - Usual card. 2% tax on card INCOME. 20$ tax on SENDING money from this card. 5% tax on WITHDRAWING money. For creation this card - press `usual`
     - Capitalist card. 10$ tax on card INCOME. 10% tax on SENDING money from this card. 4$ tax on WITHDRAWING money. For creation this card - press `capitalist`
@@ -145,10 +145,6 @@ RSpec.describe Account do
         File.delete(OVERRIDABLE_FILENAME) if File.exist?(OVERRIDABLE_FILENAME)
       end
 
-      sd = <<~HELLO
-        asd
-      HELLO
-
       it 'with correct outout' do
         allow(File).to receive(:open)
         ASK_PHRASES.each_value { |phrase| expect(current_subject).to receive(:puts).with(phrase) }
@@ -165,7 +161,7 @@ RSpec.describe Account do
         accounts = YAML.load_file(OVERRIDABLE_FILENAME)
         expect(accounts).to be_a Array
         expect(accounts.size).to be 1
-        accounts.map { |account| expect(account).to be_a described_class }
+        accounts.map { |account| expect(account).to be_a Account }
       end
     end
 
@@ -416,9 +412,9 @@ RSpec.describe Account do
     context 'when deleting' do
       it 'deletes account if user inputs is y' do
         expect(current_subject).to receive_message_chain(:gets, :chomp) { success_input }
-        expect(current_subject).to receive(:accounts) { accounts }
+        current_subject.instance_variable_set(:@accounts, accounts)
         current_subject.instance_variable_set(:@file_path, OVERRIDABLE_FILENAME)
-        current_subject.instance_variable_set(:@current_account, instance_double('Account', login: correct_login))
+        current_subject.instance_variable_set(:@current_account, correct_account)
 
         current_subject.destroy_account
 
@@ -455,11 +451,13 @@ RSpec.describe Account do
   end
 
   describe '#create_card' do
+    let(:current_account) { Account.new('test', 'password', 'Alex', 33) }
+
     context 'with correct outout' do
       it do
         expect(current_subject).to receive(:puts).with(CREATE_CARD_PHRASES)
         current_subject.instance_variable_set(:@card, [])
-        current_subject.instance_variable_set(:@current_account, current_subject)
+        current_subject.instance_variable_set(:@current_account, current_account)
         allow(current_subject).to receive(:accounts).and_return([])
         allow(File).to receive(:open)
         expect(current_subject).to receive_message_chain(:gets, :chomp) { 'usual' }
@@ -470,10 +468,9 @@ RSpec.describe Account do
 
     context 'when correct card choose' do
       before do
-        allow(current_subject).to receive(:card).and_return([])
-        allow(current_subject).to receive(:accounts) { [current_subject] }
+        current_subject.instance_variable_set(:@accounts, [current_account])
         current_subject.instance_variable_set(:@file_path, OVERRIDABLE_FILENAME)
-        current_subject.instance_variable_set(:@current_account, current_subject)
+        current_subject.instance_variable_set(:@current_account, current_account)
       end
 
       after do
@@ -488,7 +485,7 @@ RSpec.describe Account do
 
           expect(File.exist?(OVERRIDABLE_FILENAME)).to be true
           file_accounts = YAML.load_file(OVERRIDABLE_FILENAME)
-          expect(file_accounts.first.card.first).to be_instance_of(card_info[:class])
+          expect(file_accounts.first.card.first.type).to eq card_info[:type]
           expect(file_accounts.first.card.first.balance).to eq card_info[:balance]
           expect(file_accounts.first.card.first.number.length).to be 16
         end
@@ -497,8 +494,8 @@ RSpec.describe Account do
 
     context 'when incorrect card choose' do
       it do
-        current_subject.instance_variable_set(:@card, [])
-        current_subject.instance_variable_set(:@current_account, current_subject)
+        current_account.instance_variable_set(:@card, [])
+        current_subject.instance_variable_set(:@current_account, current_account)
         allow(File).to receive(:open)
         allow(current_subject).to receive(:accounts).and_return([])
         allow(current_subject).to receive_message_chain(:gets, :chomp).and_return('test', 'usual')

@@ -1,34 +1,20 @@
-require 'yaml'
-require 'pry'
-require 'i18n'
+require_relative 'dependencies'
 
-require_relative 'entities/card'
-require_relative 'entities/capitalist_card'
-require_relative 'entities/usual_card'
-require_relative 'entities/virtual_card'
+class AccountConsole
+  FILE_PATH = File.expand_path('accounts.yml', __dir__)
 
-I18n.load_path << Dir["#{File.expand_path('config/locales', __dir__)}/*.yml"]
+  attr_reader :login, :name, :card, :password, :file_path
 
-class Account
-  attr_accessor :login, :name, :card, :password, :file_path
-
-  def initialize
+  def initialize(file_path: FILE_PATH)
     @errors = []
-    @file_path = 'accounts.yml'
+    @file_path = file_path
   end
 
   def console
     puts I18n.t('hello')
-
-    # FIRST SCENARIO. IMPROVEMENT NEEDED
-
-    a = gets.chomp
-
-    case a
-    when 'create'
-      create
-    when 'load'
-      load
+    case gets.chomp
+    when 'create' then create
+    when 'load' then load
     else
       exit
     end
@@ -42,36 +28,28 @@ class Account
       password_input
       break if @errors.empty?
 
-      @errors.each do |e|
-        puts e
-      end
-      @errors = []
+      @errors.each { |error| puts error }.clear
     end
 
-    @card = []
-    new_accounts = accounts << self
-    @current_account = self
-    File.open(@file_path, 'w') { |f| f.write new_accounts.to_yaml } # Storing
+    @current_account = Account.new(@login, @password, @name, @age)
+    accounts << @current_account
+    save
     main_menu
   end
 
   def load
     loop do
-      return create_the_first_account unless accounts.any?
+      return create_the_first_account if accounts.empty?
 
       puts I18n.t('enter_login')
       login = gets.chomp
       puts I18n.t('enter_password')
       password = gets.chomp
 
-      if accounts.map { |a| { login: a.login, password: a.password } }.include?({ login: login, password: password })
-        a = accounts.select { |a| login == a.login }.first
-        @current_account = a
-        break
-      else
-        puts 'There is no account with given credentials'
-        next
-      end
+      @current_account = find_account_by_login_password(login, password)
+      break if @current_account
+
+      puts 'There is no account with given credentials'
     end
     main_menu
   end
@@ -89,29 +67,19 @@ class Account
     loop do
       puts I18n.t('account_menu', name: @current_account.name)
 
-      command = gets.chomp
-
-      if %w[SC CC DC PM WM SM DA exit].include?(command)
-        case command
-        when 'SC'
-          show_cards
-        when 'CC'
-          create_card
-        when 'DC'
-          destroy_card
-        when 'PM'
-          put_money
-        when 'WM'
-          withdraw_money
-        when 'SM'
-          send_money
-        when 'DA'
-          destroy_account
-          exit
-        when 'exit'
-          exit
-          break
-        end
+      case gets.chomp
+      when 'SC' then show_cards
+      when 'CC' then create_card
+      when 'DC' then destroy_card
+      when 'PM' then put_money
+      when 'WM' then withdraw_money
+      when 'SM' then send_money
+      when 'DA'
+        destroy_account
+        exit
+      when 'exit'
+        exit
+        break
       else
         puts I18n.t('errors.wrong_command')
       end
@@ -122,27 +90,15 @@ class Account
     loop do
       puts I18n.t('create_card_menu')
 
-      ct = gets.chomp
-      if %w[usual capitalist virtual].include?(ct)
-        case ct
-        when 'usual'
-          card = UsualCard.new
-        when 'capitalist'
-          card = CapitalistCard.new
-        when 'virtual'
-          card = VirtualCard.new
+      card_type = gets.chomp
+      if %w[usual capitalist virtual].include?(card_type)
+        case card_type
+        when 'usual' then card = UsualCard.new
+        when 'capitalist' then card = CapitalistCard.new
+        when 'virtual' then card = VirtualCard.new
         end
-        cards = @current_account.card << card
-        @current_account.card = cards # important!!!
-        new_accounts = []
-        accounts.each do |ac|
-          if ac.login == @current_account.login
-            new_accounts.push(@current_account)
-          else
-            new_accounts.push(ac)
-          end
-        end
-        File.open(@file_path, 'w') { |f| f.write new_accounts.to_yaml } # Storing
+        @current_account.card << card
+        save
         break
       else
         puts "Wrong card type. Try again!\n"
@@ -151,101 +107,78 @@ class Account
   end
 
   def destroy_card
+    if @current_account.card.empty?
+      puts "There is no active cards!\n"
+      return
+    end
+
     loop do
-      if @current_account.card.any?
-        puts 'If you want to delete:'
+      puts 'If you want to delete:'
 
-        @current_account.card.each_with_index do |c, i|
-          puts "- #{c.number}, #{c.type}, press #{i + 1}"
-        end
-        puts "press `exit` to exit\n"
-        answer = gets.chomp
-        break if answer == 'exit'
+      @current_account.card.each_with_index { |card, index| puts "- #{card.number}, #{card.type}, press #{index + 1}" }
+      puts "press `exit` to exit\n"
+      answer = gets.chomp
+      break if answer == 'exit'
 
-        if answer&.to_i.to_i <= @current_account.card.length && answer&.to_i.to_i.positive?
-          puts "Are you sure you want to delete #{@current_account.card[answer&.to_i.to_i - 1].number}?[y/n]"
-          a2 = gets.chomp
-          if a2 == 'y'
-            @current_account.card.delete_at(answer&.to_i.to_i - 1)
-            new_accounts = []
-            accounts.each do |ac|
-              if ac.login == @current_account.login
-                new_accounts.push(@current_account)
-              else
-                new_accounts.push(ac)
-              end
-            end
-            File.open(@file_path, 'w') { |f| f.write new_accounts.to_yaml } # Storing
-            break
-          else
-            return
-          end
-        else
-          puts "You entered wrong number!\n"
-        end
-      else
-        puts "There is no active cards!\n"
+      card_chooce = answer.to_i
+
+      if card_chooce <= @current_account.card.length && card_chooce.positive?
+        puts "Are you sure you want to delete #{@current_account.card[card_chooce - 1].number}?[y/n]"
+        return unless gets.chomp == 'y'
+
+        @current_account.card.delete_at(card_chooce - 1)
+        save
         break
+      else
+        puts "You entered wrong number!\n"
       end
     end
   end
 
   def show_cards
-    if @current_account.card.any?
-      @current_account.card.each do |c|
-        puts "- #{c.number}, #{c.type}"
-      end
-    else
+    if @current_account.card.empty?
       puts "There is no active cards!\n"
+    else
+      @current_account.card.each { |card| puts "- #{card.number}, #{card.type}" }
     end
   end
 
   def withdraw_money
     puts 'Choose the card for withdrawing:'
-    answer, a2, a3 = nil # answers for gets.chomp
-    if @current_account.card.any?
-      @current_account.card.each_with_index do |c, i|
-        puts "- #{c.number}, #{c.type}, press #{i + 1}"
-      end
-      puts "press `exit` to exit\n"
-      loop do
-        answer = gets.chomp
-        break if answer == 'exit'
+    if @current_account.card.empty?
+      puts "There is no active cards!\n"
+      return
+    end
 
-        if answer&.to_i.to_i <= @current_account.card.length && answer&.to_i.to_i.positive?
-          current_card = @current_account.card[answer&.to_i.to_i - 1]
-          loop do
-            puts 'Input the amount of money you want to withdraw'
-            a2 = gets.chomp
-            if a2&.to_i.to_i.positive?
-              begin
-                current_card.withdraw_money(a2&.to_i.to_i)
-                new_accounts = []
-                accounts.each do |ac|
-                  if ac.login == @current_account.login
-                    new_accounts.push(@current_account)
-                  else
-                    new_accounts.push(ac)
-                  end
-                end
-                File.open(@file_path, 'w') { |f| f.write new_accounts.to_yaml } # Storing
-                puts "Money #{a2&.to_i.to_i} withdrawed from #{current_card.number}$. Money left: #{current_card.balance}$. Tax: #{current_card.withdraw_tax(a2&.to_i.to_i)}$"
-              rescue NotEnoughMoneyError => e
-                puts e.message
-                return
-              end
-            else
-              puts 'You must input correct amount of $'
+    @current_account.card.each_with_index { |card, index| puts "- #{card.number}, #{card.type}, press #{index + 1}" }
+    puts "press `exit` to exit\n"
+    loop do
+      answer = gets.chomp
+      break if answer == 'exit'
+
+      if answer&.to_i.to_i <= @current_account.card.length && answer&.to_i.to_i.positive?
+        current_card = @current_account.card[answer&.to_i.to_i - 1]
+        loop do
+          puts 'Input the amount of money you want to withdraw'
+          a2 = gets.chomp.to_i
+          if a2&.to_i.to_i.positive?
+            begin
+              current_card.withdraw_money(a2&.to_i.to_i)
+              save
+              puts "Money #{a2&.to_i.to_i} withdrawed from #{current_card.number}$. Money left: #{current_card.balance}$. Tax: #{current_card.withdraw_tax(a2&.to_i.to_i)}$"
+            rescue NotEnoughMoneyError => e
+              puts e.message
               return
             end
+          else
+            puts 'You must input correct amount of $'
+            return
           end
-        else
-          puts "You entered wrong number!\n"
-          return
         end
+      else
+        puts "You entered wrong number!\n"
+        return
       end
-    else
-      puts "There is no active cards!\n"
     end
   end
 
@@ -253,9 +186,7 @@ class Account
     puts 'Choose the card for putting:'
 
     if @current_account.card.any?
-      @current_account.card.each_with_index do |c, i|
-        puts "- #{c.number}, #{c.type}, press #{i + 1}"
-      end
+      @current_account.card.each_with_index { |card, index| puts "- #{card.number}, #{card.type}, press #{index + 1}" }
       puts "press `exit` to exit\n"
       loop do
         answer = gets.chomp
@@ -273,15 +204,7 @@ class Account
               else
                 current_card.put_money(a2&.to_i.to_i)
                 @current_account.card[answer&.to_i.to_i - 1] = current_card
-                new_accounts = []
-                accounts.each do |ac|
-                  if ac.login == @current_account.login
-                    new_accounts.push(@current_account)
-                  else
-                    new_accounts.push(ac)
-                  end
-                end
-                File.open(@file_path, 'w') { |f| f.write new_accounts.to_yaml } # Storing
+                save
                 puts "Money #{a2&.to_i.to_i} was put on #{current_card.number}. Balance: #{current_card.balance}. Tax: #{current_card.put_tax(a2&.to_i.to_i)}"
                 return
               end
@@ -303,36 +226,31 @@ class Account
   def send_money
     puts 'Choose the card for sending:'
 
-    if @current_account.card.any?
-      @current_account.card.each_with_index do |c, i|
-        puts "- #{c.number}, #{c.type}, press #{i + 1}"
-      end
-      puts "press `exit` to exit\n"
-      answer = gets.chomp
-      exit if answer == 'exit'
-      if answer&.to_i.to_i <= @current_account.card.length && answer&.to_i.to_i.positive?
-        sender_card = @current_account.card[answer&.to_i.to_i - 1]
-      else
-        puts 'Choose correct card'
-        return
-      end
-    else
+    if @current_account.card.empty?
       puts "There is no active cards!\n"
+      return
+    end
+
+    @current_account.card.each_with_index { |card, index| puts "- #{card.number}, #{card.type}, press #{index + 1}" }
+    puts "press `exit` to exit\n"
+    answer = gets.chomp
+    exit if answer == 'exit'
+    if answer&.to_i.to_i <= @current_account.card.length && answer&.to_i.to_i.positive?
+      sender_card = @current_account.card[answer&.to_i.to_i - 1]
+    else
+      puts 'Choose correct card'
       return
     end
 
     puts 'Enter the recipient card:'
     a2 = gets.chomp
-    if a2.length > 15 && a2.length < 17
-      all_cards = accounts.map(&:card).flatten
-      if all_cards.select { |card| card[:number] == a2 }.any?
-        recipient_card = all_cards.select { |card| card[:number] == a2 }.first
-      else
-        puts "There is no card with number #{a2}\n"
-        return
-      end
-    else
+    unless a2.length > 15 && a2.length < 17
       puts 'Please, input correct number of card'
+      return
+    end
+    recipient_card = find_card_by_number(a2)
+    unless recipient_card
+      puts "There is no card with number #{a2}\n"
       return
     end
 
@@ -340,43 +258,10 @@ class Account
       puts 'Input the amount of money you want to withdraw'
       a3 = gets.chomp
       if a3&.to_i.to_i.positive?
-        sender_balance = sender_card[:balance] - a3&.to_i.to_i - sender_tax(sender_card[:type], sender_card[:balance],
-                                                                            sender_card[:number], a3&.to_i.to_i)
-        recipient_balance = recipient_card[:balance] + a3&.to_i.to_i - put_tax(recipient_card[:type],
-                                                                               recipient_card[:balance], recipient_card[:number], a3&.to_i.to_i)
-
-        if sender_balance.negative?
-          puts "You don't have enough money on card for such operation"
-        elsif put_tax(recipient_card[:type], recipient_card[:balance], recipient_card[:number],
-                      a3&.to_i.to_i) >= a3&.to_i.to_i
-          puts 'There is no enough money on sender card'
-        else
-          sender_card[:balance] = sender_balance
-          @current_account.card[answer&.to_i.to_i - 1] = sender_card
-          new_accounts = []
-          accounts.each do |ac|
-            if ac.login == @current_account.login
-              new_accounts.push(@current_account)
-            elsif ac.card.map { |card| card[:number] }.include? a2
-              recipient = ac
-              new_recipient_cards = []
-              recipient.card.each do |card|
-                card[:balance] = recipient_balance if card[:number] == a2
-                new_recipient_cards.push(card)
-              end
-              recipient.card = new_recipient_cards
-              new_accounts.push(recipient)
-            end
-          end
-          File.open('accounts.yml', 'w') { |f| f.write new_accounts.to_yaml } # Storing
-          puts "Money #{a3&.to_i.to_i}$ was put on #{sender_card[:number]}. Balance: #{recipient_balance}. Tax: #{put_tax(
-            sender_card[:type], sender_card[:balance], sender_card[:number], a3&.to_i.to_i
-          )}$\n"
-          puts "Money #{a3&.to_i.to_i}$ was put on #{a2}. Balance: #{sender_balance}. Tax: #{sender_tax(
-            sender_card[:type], sender_card[:balance], sender_card[:number], a3&.to_i.to_i
-          )}$\n"
-          break
-        end
+        card.send_money(recipient_card)
+        puts "Money #{a3&.to_i.to_i}$ was put on #{recipient_card.number}. Balance: #{recipient_card.balance}. Tax: #{recipient_card.put_tax(a3&.to_i.to_i)}$\n"
+        puts "Money #{a3&.to_i.to_i}$ was put on #{a2}. Balance: #{sender_card.balance}. Tax: #{sender_card.sender_tax(a3&.to_i.to_i)}$\n"
+        break
       else
         puts 'You entered wrong number!\n'
       end
@@ -385,17 +270,10 @@ class Account
 
   def destroy_account
     puts 'Are you sure you want to destroy account?[y/n]'
-    a = gets.chomp
-    if a == 'y'
-      new_accounts = []
-      accounts.each do |ac|
-        if ac.login == @current_account.login
-        else
-          new_accounts.push(ac)
-        end
-      end
-      File.open(@file_path, 'w') { |f| f.write new_accounts.to_yaml } # Storing
-    end
+    return unless gets.chomp == 'y'
+
+    accounts.delete(@current_account)
+    save
   end
 
   private
@@ -403,31 +281,26 @@ class Account
   def name_input
     puts 'Enter your name'
     @name = gets.chomp
-    unless @name != '' && @name[0].upcase == @name[0]
-      @errors.push('Your name must not be empty and starts with first upcase letter')
-    end
+    return if @name != '' && @name[0].upcase == @name[0]
+
+    @errors << 'Your name must not be empty and starts with first upcase letter'
   end
 
   def login_input
     puts 'Enter your login'
     @login = gets.chomp
-    @errors.push('Login must present') if @login == ''
-
-    @errors.push('Login must be longer then 4 symbols') if @login.length < 4
-
-    @errors.push('Login must be shorter then 20 symbols') if @login.length > 20
-
-    @errors.push('Such account is already exists') if accounts.map(&:login).include? @login
+    @errors << 'Login must present' if @login == ''
+    @errors << 'Login must be longer then 4 symbols' if @login.length < 4
+    @errors << 'Login must be shorter then 20 symbols' if @login.length > 20
+    @errors << 'Such account is already exists' if accounts.any? { |account| account.login == @login }
   end
 
   def password_input
     puts 'Enter your password'
     @password = gets.chomp
-    @errors.push('Password must present') if @password == ''
-
-    @errors.push('Password must be longer then 6 symbols') if @password.length < 6
-
-    @errors.push('Password must be shorter then 30 symbols') if @password.length > 30
+    @errors << 'Password must present' if @password == ''
+    @errors << 'Password must be longer then 6 symbols' if @password.length < 6
+    @errors << 'Password must be shorter then 30 symbols' if @password.length > 30
   end
 
   def age_input
@@ -436,15 +309,31 @@ class Account
     if @age.to_i.is_a?(Integer) && @age.to_i >= 23 && @age.to_i <= 90
       @age = @age.to_i
     else
-      @errors.push('Your Age must be greeter then 23 and lower then 90')
+      @errors << 'Your Age must be greeter then 23 and lower then 90'
     end
   end
 
   def accounts
-    if File.exist?('accounts.yml')
-      YAML.load_file('accounts.yml')
-    else
-      []
-    end
+    @accounts ||= store.load
+  end
+
+  def store
+    @store ||= YamlStore.new(file_path)
+  end
+
+  def save
+    store.save(accounts)
+  end
+
+  def find_account_by_login_password(login, password)
+    accounts.find { |account| account.login == login && account.password == password }
+  end
+
+  def all_cards
+    accounts.map(&:card).flatten
+  end
+
+  def find_card_by_number(card_number)
+    all_cards.find { |card| card.number == card_number }
   end
 end

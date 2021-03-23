@@ -19,7 +19,10 @@ class Card
   end
 
   def send_money(recipient, amount)
-    @balance -= amount - sender_tax(amount)
+    new_balance = amount - sender_tax(amount)
+    raise NotEnoughMoneyError if new_balance.negative?
+
+    @balance = new_balance
     recipient.put_money(amount)
   end
 
