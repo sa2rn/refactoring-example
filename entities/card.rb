@@ -1,28 +1,31 @@
 class Card
   NUMBER_LENGTH = 16
   NUMBER_RAND = 10
-  CARD_TYPES = %w[usual capitalist virtual]
+  CARD_TYPES = %w[usual capitalist virtual].freeze
 
   attr_reader :type, :balance
 
   def self.create(type, *args)
     raise ArgumentError unless CARD_TYPES.any?(type)
+
     const_get("#{type.capitalize}Card").new(type, *args)
   end
 
   def initialize(type, balance = 0)
     raise ArgumentError unless CARD_TYPES.any?(type)
+
     @type = type
     @balance = balance
   end
 
   def number
-    @number ||= NUMBER_SIZE.times.map { rand(NUMBER_RAND) }.join
+    @number ||= Array.new(NUMBER_LENGTH) { rand(NUMBER_RAND) }.join
   end
 
   def withdraw_money(amount)
     new_balance = balance - withdraw_tax(amount)
     return NotEnoughMoneyError if new_balance.negative?
+
     @balance = new_balance
     withdraw_money_result(amount)
   end
@@ -30,6 +33,7 @@ class Card
   def put_money(amount)
     new_balance = balance + amount - put_tax(amount)
     raise NotEnoughMoneyError if new_balance.negative?
+
     @balance = new_balance
     put_money_result(amount)
   end
@@ -37,6 +41,7 @@ class Card
   def send_money(amount, recipient_card)
     new_balance = balance - amount - sender_tax(amount)
     raise NotEnoughMoneyError if new_balance.negative?
+
     recipient_card.receive_money(amount)
     @balance = new_balance
     send_money_result(amount, recipient_card)
@@ -80,6 +85,7 @@ class Card
   def receive_money(amount)
     new_balance = balance + amount - put_tax(amount)
     raise NotEnoughMoneyError if new_balance.negative?
+
     @balance = new_balance
   end
 

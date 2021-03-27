@@ -1,13 +1,10 @@
-require 'yaml'
-require 'pry'
-
 class AccountConsole
   FILE_PATH = File.expand_path('accounts.yml', __dir__)
   LOGIN_MIN_LENGTH = 4
   LOGIN_MAX_LENGTH = 20
   PASSWORD_MIN_LENGTH = 6
   PASSWORD_MAX_LENGTH = 30
-  AGE_RANGE = 23..90
+  AGE_RANGE = (23..90).freeze
 
   attr_accessor :login, :name, :card, :password, :file_path
 
@@ -33,6 +30,7 @@ class AccountConsole
       login_input
       password_input
       break if @errors.empty?
+
       @errors.each { |error| puts error }.clear
     end
     @current_account = new Account(name: @name, age: @age, login: @login, password: @password)
@@ -50,6 +48,7 @@ class AccountConsole
       password = gets.chomp
       @current_account = accounts.find { |account| login == account.login && password === account.password }
       break if @current_account
+
       puts I18n.t('error.user_not_exists')
     end
     main_menu
@@ -57,6 +56,7 @@ class AccountConsole
 
   def create_the_first_account
     return create if confirm?(I18n.t('common.create_first_account'))
+
     console
   end
 
@@ -135,6 +135,7 @@ class AccountConsole
     loop do
       money = enter_money_amount
       next unless money
+
       begin
         result = sender_card.send_money(amount, recipient_balance)
         @current_account.card.map! { |card| card.number == sender_card.number }
@@ -142,7 +143,7 @@ class AccountConsole
           if account.login == @current_account.login
             current_account
           elsif account.card.any? { |card| card.number == recipient_card.number }
-            account.card.map! do { |card| card.number == recipient_card.number ? recipient_card : card }
+            account.card.map! { |card| card.number == recipient_card.number ? recipient_card : card }
             account
           else
             account
@@ -151,7 +152,7 @@ class AccountConsole
         store.save(new_accounts)
         puts result
         break
-      rescue => e
+      rescue StandardError => e
         puts e.message
       end
     end
@@ -171,9 +172,10 @@ class AccountConsole
     loop do
       puts I18n.t('create_card')
 
-      // TODO: exit
+      # TODO: exit
       card_type = gets.chomp
       return card_type if Card::CARD_TYPES.any?(card_type)
+
       puts I18n.t('error.wrong_card_type')
     end
   end
@@ -187,12 +189,14 @@ class AccountConsole
     puts message
     amount = gets.chomp.to_i
     return amount if amount.positive?
+
     puts I18n.t('error.correct_amount')
   end
 
   def any_card?
     return true if @current_account.card.any?
-    puts I18n.t('error.no_active_cards'
+
+    puts I18n.t('error.no_active_cards')
     false
   end
 
@@ -207,8 +211,10 @@ class AccountConsole
     loop do
       answer = gets.chomp
       break if answer == 'exit'
+
       index = answer.to_i - 1
       return  @current_account.card[index] if @current_account.card.each_index.any?(index)
+
       puts I18n.t('error.wrong_number')
     end
   end
@@ -219,7 +225,8 @@ class AccountConsole
     if recipient_card_number.length == Card::NUMBER_LENGTH
       recipient_card = all_cards.find { |card| card.number == recipient_card_number }
       return recipient_card if recipient_card
-      puts I18n.t('error.no_card_with_number', number: recipient_card_number})
+
+      puts I18n.t('error.no_card_with_number', number: recipient_card_number)
     else
       puts I18n.t('error.wrong_card_number')
     end

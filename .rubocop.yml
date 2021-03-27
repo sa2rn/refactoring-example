@@ -4,13 +4,13 @@ RSpec/MessageChain:
   Enabled: false
 
 RSpec/NestedGroups:
-  Max: 5
+  Max: 6
 
 RSpec/MultipleExpectations:
   Max: 5
 
 RSpec/ExampleLength:
-  Max: 10
+  Max: 13
 
 RSpec/MessageSpies:
   Enabled: false
