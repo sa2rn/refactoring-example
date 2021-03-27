@@ -1,10 +1,6 @@
 class CapitalistCard < Card
-  def initialize(balance = 100.00)
+  def initialize(type, balance = 100.00)
     super
-  end
-
-  def type
-    'capitalist'
   end
 
   def withdraw_tax_percent

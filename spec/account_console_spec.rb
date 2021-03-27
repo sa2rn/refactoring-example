@@ -63,7 +63,7 @@ RSpec.describe AccountConsole do
     tax_higher: 'Your tax is higher than input amount'
   }.freeze
 
-  MAIN_OPERATIONS_TEXTS = [
+  MAIN_OPERATIONS_TEXTS = <<~MAIN_OPERATIONS.freeze
     'If you want to:',
     '- show all cards - press SC',
     '- create card - press CC',
@@ -73,7 +73,7 @@ RSpec.describe AccountConsole do
     '- send money to another card  - press SM',
     '- destroy account - press `DA`',
     '- exit from account - press `exit`'
-  ].freeze
+  MAIN_OPERATIONS
 
   CARDS = {
     usual: {
@@ -412,7 +412,7 @@ RSpec.describe AccountConsole do
     context 'when deleting' do
       it 'deletes account if user inputs is y' do
         expect(current_subject).to receive_message_chain(:gets, :chomp) { success_input }
-        current_subject.instance_variable_set(:@accounts, accounts)
+        expect(current_subject).to receive(:accounts) { accounts }
         current_subject.instance_variable_set(:@file_path, OVERRIDABLE_FILENAME)
         current_subject.instance_variable_set(:@current_account, correct_account)
 
@@ -451,7 +451,7 @@ RSpec.describe AccountConsole do
   end
 
   describe '#create_card' do
-    let(:current_account) { Account.new('test', 'password', 'Alex', 33) }
+    let(:current_account) { Account.new(login: 'test') }
 
     context 'with correct outout' do
       it do
@@ -468,9 +468,9 @@ RSpec.describe AccountConsole do
 
     context 'when correct card choose' do
       before do
-        current_subject.instance_variable_set(:@accounts, [current_account])
         current_subject.instance_variable_set(:@file_path, OVERRIDABLE_FILENAME)
         current_subject.instance_variable_set(:@current_account, current_account)
+        allow(current_subject).to receive(:accounts) { [current_account] }
       end
 
       after do
@@ -514,8 +514,8 @@ RSpec.describe AccountConsole do
     end
 
     context 'with cards' do
-      let(:card_one) { UsualCard.new }
-      let(:card_two) { CapitalistCard.new }
+      let(:card_one) { Card.create('usual') }
+      let(:card_two) { Card.create('capitalist') }
       let(:fake_cards) { [card_one, card_two] }
 
       context 'with correct output' do

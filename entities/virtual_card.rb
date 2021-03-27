@@ -1,10 +1,6 @@
 class VirtualCard < Card
-  def initialize(balance = 150.00)
+  def initialize(type, balance = 150.00)
     super
-  end
-
-  def type
-    'virtual'
   end
 
   def withdraw_tax_percent

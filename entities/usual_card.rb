@@ -1,10 +1,6 @@
 class UsualCard < Card
-  def initialize(balance = 50.00)
+  def initialize(type, balance = 50.00)
     super
-  end
-
-  def type
-    'usual'
   end
 
   def withdraw_tax_percent
