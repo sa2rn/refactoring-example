@@ -1,5 +1,5 @@
-class CapitalistCard < Card
-  def initialize(type, balance = 100.00)
+class CapitalistCard < BaseCard
+  def initialize(balance = 100.00)
     super
   end
 

@@ -76,21 +76,9 @@ RSpec.describe AccountConsole do
   MAIN_OPERATIONS
 
   CARDS = {
-    usual: {
-      type: 'usual',
-      balance: 50.00,
-      class: UsualCard
-    },
-    capitalist: {
-      type: 'capitalist',
-      balance: 100.00,
-      class: CapitalistCard
-    },
-    virtual: {
-      type: 'virtual',
-      balance: 150.00,
-      class: VirtualCard
-    }
+    usual: UsualCard.new,
+    capitalist: UsualCard.new,
+    virtual: VirtualCard.new
   }.freeze
 
   let(:current_subject) { described_class.new }
@@ -477,16 +465,16 @@ RSpec.describe AccountConsole do
         File.delete(OVERRIDABLE_FILENAME) if File.exist?(OVERRIDABLE_FILENAME)
       end
 
-      CARDS.each do |card_type, card_info|
+      CARDS.each do |card_type, card|
         it "create card with #{card_type} type" do
-          expect(current_subject).to receive_message_chain(:gets, :chomp) { card_info[:type] }
+          expect(current_subject).to receive_message_chain(:gets, :chomp) { card.type }
 
           current_subject.create_card
 
           expect(File.exist?(OVERRIDABLE_FILENAME)).to be true
           file_accounts = YAML.load_file(OVERRIDABLE_FILENAME)
-          expect(file_accounts.first.card.first.type).to eq card_info[:type]
-          expect(file_accounts.first.card.first.balance).to eq card_info[:balance]
+          expect(file_accounts.first.card.first.type).to eq card.type
+          expect(file_accounts.first.card.first.balance).to eq card.balance
           expect(file_accounts.first.card.first.number.length).to be 16
         end
       end
@@ -514,8 +502,8 @@ RSpec.describe AccountConsole do
     end
 
     context 'with cards' do
-      let(:card_one) { Card.create('usual') }
-      let(:card_two) { Card.create('capitalist') }
+      let(:card_one) { UsualCard.new }
+      let(:card_two) { CapitalistCard.new }
       let(:fake_cards) { [card_one, card_two] }
 
       context 'with correct output' do
@@ -694,7 +682,7 @@ RSpec.describe AccountConsole do
               [
                 UsualCard.new(default_balance),
                 CapitalistCard.new(default_balance),
-                CapitalistCard.new(default_balance)
+                VirtualCard.new(default_balance)
               ]
             end
 
@@ -710,12 +698,15 @@ RSpec.describe AccountConsole do
                 allow(current_subject).to receive(:accounts) { [current_subject] }
                 current_subject.instance_variable_set(:@card, [custom_card, card_one, card_two])
                 current_subject.instance_variable_set(:@file_path, OVERRIDABLE_FILENAME)
-                new_balance = custom_card.balance + correct_money_amount_greater_than_tax - custom_card.put_tax(correct_money_amount_greater_than_tax)
+                tax = custom_card.put_tax(correct_money_amount_greater_than_tax)
+                new_balance = custom_card.balance + correct_money_amount_greater_than_tax - tax
 
                 expect { current_subject.put_money }.to output(
-                  /Money #{correct_money_amount_greater_than_tax} was put on #{custom_card.number}. Balance: #{new_balance}. Tax: #{custom_card.put_tax(correct_money_amount_greater_than_tax)}/
+                  %r{
+                  Money #{correct_money_amount_greater_than_tax} was put on #{custom_card.number}.\s
+                  Balance: #{new_balance}. Tax: #{tax}/
+                  }x
                 ).to_stdout
-
                 expect(File.exist?(OVERRIDABLE_FILENAME)).to be true
                 file_accounts = YAML.load_file(OVERRIDABLE_FILENAME)
                 expect(file_accounts.first.card.first.balance).to eq(new_balance)

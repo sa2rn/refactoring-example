@@ -1,5 +1,5 @@
-class VirtualCard < Card
-  def initialize(type, balance = 150.00)
+class VirtualCard < BaseCard
+  def initialize(balance = 150.00)
     super
   end
 
