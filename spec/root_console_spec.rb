@@ -1,4 +1,4 @@
-RSpec.describe AccountConsole do
+RSpec.describe RootConsole do
   OVERRIDABLE_FILENAME = 'spec/fixtures/account.yml'.freeze
 
   COMMON_PHRASES = {
