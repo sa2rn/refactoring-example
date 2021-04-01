@@ -5,9 +5,9 @@ require 'i18n'
 I18n.load_path << Dir["#{File.expand_path('config/locales', __dir__)}/*.yml"]
 I18n.default_locale = :en
 
-require_relative 'errors/terminate'
 require_relative 'helpers/console_helper'
-require_relative 'helpers/inputs_helper'
+require_relative 'helpers/account_inputs'
+require_relative 'helpers/card_inputs'
 require_relative 'store/yaml_store'
 require_relative 'manager/data_manager'
 

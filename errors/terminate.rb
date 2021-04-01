@@ -1,1 +1,0 @@
-class Terminate < StandardError; end

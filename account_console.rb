@@ -2,7 +2,8 @@ class AccountConsole
   FILE_PATH = File.expand_path('accounts.yml', __dir__)
 
   include ConsoleHelper
-  include InputsHelper
+  include AccountInputs
+  include CardInputs
 
   def initialize
     @file_path = FILE_PATH

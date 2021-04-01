@@ -8,7 +8,7 @@ module ConsoleHelper
 
   def confirm?(*args, **kwargs)
     output(*args, **kwargs)
-    gets.chomp == CONFIRM_YES
+    input == CONFIRM_YES
   end
 
   def leave_loop
