@@ -377,7 +377,7 @@ RSpec.describe AccountConsole do
     end
   end
 
-  describe '#destroy_account', skip: false do
+  describe '#destroy_account' do
     let(:cancel_input) { 'sdfsdfs' }
     let(:success_input) { 'y' }
     let(:correct_login) { 'test' }
