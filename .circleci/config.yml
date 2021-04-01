@@ -30,6 +30,7 @@ commands:
       - restore_cache:
           key: *bundle_cache
       - run: |
+          sudo apt-get update
           sudo apt-get install cmake
           gem install rugged
           bundle install --path ~/vendor/bundle
