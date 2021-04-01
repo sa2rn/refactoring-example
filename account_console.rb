@@ -2,7 +2,7 @@ class AccountConsole
   FILE_PATH = File.expand_path('accounts.yml', __dir__)
 
   include ConsoleHelper
-  include Inputs
+  include InputsHelper
 
   def initialize
     @file_path = FILE_PATH
@@ -34,25 +34,12 @@ class AccountConsole
   end
 
   def create
-    loop do
-      form = AccountForm.new(manager, account_form_data)
-      if form.valid?
-        @current_account = form.create_account
-        break
-      end
-      puts form.errors
-    end
+    fill_account_form(manager) { |form| @current_account = form.create_account }
     main_menu
   end
 
   def create_card
-    loop do
-      output('create_card')
-      card_type = input
-      return if exit?(card_type) || manager.create_card(@current_account, card_type)
-
-      output('error.wrong_card_type')
-    end
+    card_type_input { |card_type| manager.create_card(@current_account, card_type) }
   end
 
   def destroy_card
@@ -86,7 +73,7 @@ class AccountConsole
   end
 
   def destroy_account
-    confirm?('common.destroy_account') ? manager.remove_account(@current_account) : exit
+    confirm?('common.destroy_account') && manager.destroy_account(@current_account) && exit
   end
 
   def create_the_first_account

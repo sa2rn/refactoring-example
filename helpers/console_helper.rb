@@ -7,7 +7,7 @@ module ConsoleHelper
   end
 
   def confirm?(*args, **kwargs)
-    puts I18n.t(*args, **kwargs)
+    output(*args, **kwargs)
     gets.chomp == CONFIRM_YES
   end
 

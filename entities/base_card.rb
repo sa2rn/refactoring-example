@@ -10,7 +10,7 @@ class BaseCard
   attr_reader :balance
 
   def self.create(type, *args)
-    CARD_TYPES.key?(type) ? const_get(CARD_TYPES[type]).new(*args) : nil
+    const_get(CARD_TYPES[type]).new(*args)
   end
 
   def initialize(balance = 0)

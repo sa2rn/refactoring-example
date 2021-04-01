@@ -1,4 +1,4 @@
-module Inputs
+module InputsHelper
   def login_input
     output('ask.login')
     input
@@ -35,22 +35,43 @@ module Inputs
   end
 
   def account_form_data
-    {
-      name: name_input,
-      age: age_input,
-      login: login_input,
-      password: password_input
-    }
+    { name: name_input, age: age_input, login: login_input, password: password_input }
+  end
+
+  def fill_account_form(manager)
+    loop do
+      form = AccountForm.new(manager, account_form_data)
+      if form.valid?
+        yield form
+        break
+      end
+      puts form.errors
+    end
+  end
+
+  def card_type_input
+    loop do
+      output('create_card')
+      answer = input
+      return if exit?(answer)
+
+      card_type = CardType.new(answer)
+      if card_type.valid?
+        yield card_type.type
+        return
+      end
+      output('error.wrong_card_type')
+    end
   end
 
   def card_input(account)
     any_cards?(account) do
       prints_cards_to_choose(account)
       loop do
-        card_index = input
-        return if exit?(card_index)
+        answer = input
+        return if exit?(answer)
 
-        card_select = CardSelect.new(account, card_index)
+        card_select = CardSelect.new(account, answer)
         if card_select.valid?
           yield card_select.card, card_select.card_index
           return
@@ -87,7 +108,7 @@ module Inputs
     output('common.press_exit')
   end
 
-  def recipient_card_number
+  def recipient_card_number_input
     output('common.recipient_card')
     card_number = CardNumber.new(manager, input)
     card_number.valid? ? yield(card_number.card) : puts(card_number.errors)

@@ -7,11 +7,9 @@ class DataManager
   end
 
   def create_card(account, type)
-    card = BaseCard.create(type.to_sym)
-    if card
-      account.card << card
-      update_account(account)
-    end
+    card = BaseCard.create(type)
+    account.card << card
+    update_account(account)
     card
   end
 
@@ -62,7 +60,7 @@ class DataManager
     store.save(new_accounts)
   end
 
-  def remove_account(removed_account)
+  def destroy_account(removed_account)
     new_accounts = accounts.reject { |account| account.login == removed_account.login }
     store.save(new_accounts)
   end
