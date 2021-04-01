@@ -4,7 +4,7 @@ class SendTransactionResult < BaseTransactionResult
     super(params)
   end
 
-  def message
+  def success_message
     [send_message, receive_message].join("\n")
   end
 

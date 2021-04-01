@@ -7,11 +7,15 @@ class BaseTransactionResult
     @errors = params[:errors]
   end
 
-  def message
+  def success_message
     raise NotImplementedError
   end
 
   def success?
-    @errors&.empty?
+    errors.empty?
+  end
+
+  def to_s
+    errors.empty? ? success_message : errors.to_s
   end
 end

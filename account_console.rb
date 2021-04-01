@@ -1,8 +1,8 @@
 class AccountConsole
+  FILE_PATH = File.expand_path('accounts.yml', __dir__)
+
   include ConsoleHelper
   include Inputs
-
-  FILE_PATH = File.expand_path('accounts.yml', __dir__)
 
   def initialize
     @file_path = FILE_PATH
@@ -11,22 +11,14 @@ class AccountConsole
   def console
     output('hello')
     command = ConsoleCommand.new(input)
-    if command.valid?
-      command.run(self)
-    else
-      exit
-    end
+    command.valid? ? command.run(self) : exit
   end
 
   def main_menu
     loop do
       output('main_operations', name: @current_account.name)
       command = MainCommand.new(input)
-      if command.valid?
-        command.run(self)
-      else
-        puts command.errors
-      end
+      command.valid? ? command.run(self) : puts(command.errors)
     end
     exit
   end
@@ -36,9 +28,7 @@ class AccountConsole
 
     loop do
       @current_account = manager.find_by_login_password(login_input, password_input)
-      break if @current_account
-
-      output('error.user_not_exists')
+      @current_account ? break : output('error.user_not_exists')
     end
     main_menu
   end
@@ -66,59 +56,37 @@ class AccountConsole
   end
 
   def destroy_card
-    any_cards? do
-      output('common.if_you_want_to_delete')
-      select_card_input(@current_account) do |card|
-        manager.destroy_card(@current_account, card) if confirm_delete?(card)
-      end
+    destroy_card_input(@current_account) do |card|
+      manager.destroy_card(@current_account, card) if confirm?('common.destroy_card', number: card.number)
     end
   end
 
   def show_cards
-    any_cards? do
-      @current_account.card.each { |card| puts "- #{card.number}, #{card.type}" }
-    end
+    any_cards?(@current_account) { @current_account.card.each { |card| puts "- #{card.number}, #{card.type}" } }
   end
 
   def withdraw_money
-    any_cards? do
-      output('common.choose_card_withdrawing')
-      select_card_input(@current_account) do |card|
-        output('common.withdraw_amount')
-        result = manager.withdraw_money(@current_account, card, input.to_i)
-        puts result.success? ? result.message : result.errors
-      end
+    withdraw_card_input(@current_account) do |card|
+      puts manager.withdraw_money(@current_account, card, withdraw_amount_input)
     end
   end
 
   def put_money
-    any_cards? do
-      output('common.choose_card')
-      select_card_input(@current_account) do |card|
-        output('common.input_amount')
-        result = manager.put_money(@current_account, card, input.to_i)
-        puts result.success? ? result.message : result.errors
-      end
+    put_card_input(@current_account) do |card|
+      puts manager.put_money(@current_account, card, put_amount_input)
     end
   end
 
   def send_money
-    any_cards? do
-      output('common.choose_card_sending')
-      select_card_input(@current_account) do |sender_card|
-        output('common.recipient_card')
-        card_number_input do |recipient_card|
-          output('common.input_amount')
-          result = manager.send_money(@current_account, sender_card, recipient_card, input.to_i)
-          puts result.success? ? result.message : result.errors
-        end
+    send_card_input(@current_account) do |sender_card|
+      recipient_card_number_input do |recipient_card|
+        puts manager.send_money(@current_account, sender_card, recipient_card, send_amount_input)
       end
     end
   end
 
   def destroy_account
-    manager.remove_account(@current_account) if confirm?('common.destroy_account')
-    exit
+    confirm?('common.destroy_account') ? manager.remove_account(@current_account) : exit
   end
 
   def create_the_first_account
@@ -126,18 +94,6 @@ class AccountConsole
   end
 
   private
-
-  def confirm_delete?(card)
-    confirm?('common.destroy_card', number: card.number)
-  end
-
-  def any_cards?
-    if @current_account.card.any?
-      yield
-    else
-      output('error.no_active_cards')
-    end
-  end
 
   def accounts
     store.load

@@ -11,16 +11,6 @@ module ConsoleHelper
     gets.chomp == CONFIRM_YES
   end
 
-  def catch_terminate
-    yield
-  rescue Terminate
-    nil
-  end
-
-  def terminate
-    raise Terminate
-  end
-
   def leave_loop
     raise StopIteration
   end
