@@ -9,6 +9,7 @@ en:
     recipient_card: 'Enter the recipient card:'
     input_amount: Input the amount of money you want to put on your card
     withdraw_amount: Input the amount of money you want to withdraw
+    send_amount: Input the amount of money you want to send
     destroy_card: Are you sure you want to delete %{number}?[y/n]
     press_to_choose: '- %{number}, %{type}, press %{index}'
     press_exit: |
@@ -62,7 +63,7 @@ en:
   success:
     put_money: 'Money %{amount} was put on %{number}. Balance: %{balance}. Tax: %{tax}'
     withdraw_money: 'Money %{amount} withdrawed from %{number}$. Money left: %{balance}$. Tax: %{tax}$'
-    send_money: 'Money %{amount} was send from %{number}. Balance: %{balance}. Tax: #{tax}'
+    send_money: 'Money %{amount} was send from %{number}. Balance: %{balance}. Tax: %{tax}'
   main_operations: |-
     Welcome, %{name}
     If you want to:
