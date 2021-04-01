@@ -10,7 +10,7 @@ class BaseCard
   attr_reader :balance
 
   def self.create(type, *args)
-    const_get(CARD_TYPES[type]).new(*args)
+    CARD_TYPES.key?(type) ? const_get(CARD_TYPES[type]).new(*args) : nil
   end
 
   def initialize(balance = 0)
@@ -26,19 +26,15 @@ class BaseCard
   end
 
   def withdraw_money(amount)
-    charge(-amount - withdraw_tax(amount))
-    WithdrawMoneyResult.new(self, amount)
+    WithdrawTransation.new(self, amount).run
   end
 
   def put_money(amount)
-    charge(amount - put_tax(amount))
-    PutMoneyResult.new(self, amount)
+    PutTransaction.new(self, amount).run
   end
 
   def send_money(amount, recipient_card)
-    charge(-amount - sender_tax(amount))
-    recipient_card.charge(amount - put_tax(amount))
-    SendMoneyResult.new(self, recipient_card, amount)
+    SendTransaction.new(self, recipient_card, amount).run
   end
 
   def withdraw_tax_percent
@@ -73,9 +69,7 @@ class BaseCard
     amount * sender_tax_percent / 100.0 + sender_tax_fixed
   end
 
-  protected
-
-  def charge(amount)
-    @balance += amount
+  def update_balance(balance)
+    @balance = balance
   end
 end

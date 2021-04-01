@@ -1,8 +1,7 @@
-class SendMoneyResult
-  def initialize(card, recipient_card, amount)
-    @card = card
-    @recipient_card = recipient_card
-    @amount = amount
+class SendTransactionResult < BaseTransactionResult
+  def initialize(params)
+    @recipient_card = params[:recipient_card]
+    super(params)
   end
 
   def message

@@ -1,42 +1,43 @@
 class DataManager
-  attr_reader :store
+  attr_reader :store, :accounts
 
-  def initialize(store)
+  def initialize(store, accounts)
     @store = store
+    @accounts = accounts
   end
 
   def create_card(account, type)
     card = BaseCard.create(type.to_sym)
-    account.card << card
-    update_account(account)
+    if card
+      account.card << card
+      update_account(account)
+    end
     card
   end
 
-  def destroy_card(account, card_index)
-    account.card.delete_at(card_index)
+  def destroy_card(account, card)
+    account.card.delete(card)
     update_account(account)
   end
 
-  def withdraw_money(account, card_index, amount)
-    card = account.card[card_index]
+  def withdraw_money(account, card, amount)
     result = card.withdraw_money(amount)
-    update_account(account)
+    update_account(account) if result.success?
     result
   end
 
-  def put_money(account, card_index, amount)
-    card = account.card[card_index]
+  def put_money(account, card, amount)
     result = card.put_money(amount)
-    update_account(account)
+    update_account(account) if result.success?
     result
   end
 
-  def send_money(account, card_index, recipient_card_number, amount)
-    sender_card = account.card[card_index]
+  def send_money(account, sender_card, recipient_card, amount)
     result = sender_card.send_money(amount, recipient_card)
-    recipient_card = find_card_by_number(recipient_card_number)
-    update_account(current_account)
-    update_card(recipient_card)
+    if result.success?
+      update_account(account)
+      update_card(recipient_card)
+    end
     result
   end
 
@@ -50,8 +51,10 @@ class DataManager
     store.save(new_accounts)
   end
 
-  def create_account(account)
-    store.save(accounts << account)
+  def create_account(params)
+    new_account = Account.new(params)
+    store.save(accounts << new_account)
+    new_account
   end
 
   def update_account(new_account)
@@ -86,9 +89,5 @@ class DataManager
 
   def all_cards
     accounts.map(&:card).flatten
-  end
-
-  def accounts
-    store.load
   end
 end
