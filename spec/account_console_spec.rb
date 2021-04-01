@@ -448,7 +448,7 @@ RSpec.describe AccountConsole do
     context 'with correct outout' do
       it do
         expect(current_subject).to receive(:puts).with(CREATE_CARD_PHRASES)
-        # current_subject.instance_variable_set(:@card, [])
+        current_account.instance_variable_set(:@card, [])
         current_subject.instance_variable_set(:@current_account, current_account)
         allow(current_subject).to receive(:accounts).and_return([])
         allow(File).to receive(:open)
@@ -486,7 +486,7 @@ RSpec.describe AccountConsole do
 
     context 'when incorrect card choose' do
       it do
-        # current_account.instance_variable_set(:@card, [])
+        current_account.instance_variable_set(:@card, [])
         current_subject.instance_variable_set(:@current_account, current_account)
         allow(File).to receive(:open)
         allow(current_subject).to receive(:accounts).and_return([])
@@ -711,7 +711,8 @@ RSpec.describe AccountConsole do
                 new_balance = custom_card.balance + correct_money_amount_greater_than_tax - tax
 
                 expect { current_subject.put_money }.to output(
-                  /Money #{correct_money_amount_greater_than_tax} was put on #{custom_card.number}. Balance: #{new_balance}. Tax: #{tax}/
+                  Regexp.new("Money #{correct_money_amount_greater_than_tax} was put on #{custom_card.number}. "\
+                    "Balance: #{new_balance}. Tax: #{tax}")
                 ).to_stdout
                 expect(File.exist?(OVERRIDABLE_FILENAME)).to be true
                 file_accounts = YAML.load_file(OVERRIDABLE_FILENAME)
