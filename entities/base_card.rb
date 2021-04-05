@@ -1,4 +1,6 @@
 class BaseCard
+  DEFAULT_BALANCE = 0
+  DEFAULT_TAX = 0
   NUMBER_LENGTH = 16
   NUMBER_RAND = 10
   CARD_TYPES = {
@@ -13,7 +15,7 @@ class BaseCard
     const_get(CARD_TYPES[type]).new(*args)
   end
 
-  def initialize(balance = 0)
+  def initialize(balance = DEFAULT_BALANCE)
     @balance = balance
   end
 
@@ -38,23 +40,23 @@ class BaseCard
   end
 
   def withdraw_tax_percent
-    0
+    raise NoImplementedError
   end
 
   def put_tax_percent
-    0
+    DEFAULT_TAX
   end
 
   def put_tax_fixed
-    0
+    DEFAULT_TAX
   end
 
   def sender_tax_percent
-    0
+    DEFAULT_TAX
   end
 
   def sender_tax_fixed
-    0
+    DEFAULT_TAX
   end
 
   def withdraw_tax(amount)

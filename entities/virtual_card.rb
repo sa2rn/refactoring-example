@@ -1,17 +1,22 @@
 class VirtualCard < BaseCard
-  def initialize(balance = 150.00)
+  BALANCE = 150.0
+  WITHDRAW_TAX = 5
+  PUT_TAX = 2
+  SENDER_TAX = 20
+
+  def initialize(balance = BALANCE)
     super
   end
 
   def withdraw_tax_percent
-    88
+    WITHDRAW_TAX
   end
 
   def put_tax_fixed
-    1
+    PUT_TAX
   end
 
   def sender_tax_fixed
-    1
+    SENDER_TAX
   end
 end

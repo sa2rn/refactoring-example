@@ -1,17 +1,22 @@
 class UsualCard < BaseCard
-  def initialize(balance = 50.00)
+  BALANCE = 50.0
+  WITHDRAW_TAX = 5
+  PUT_TAX = 2
+  SENDER_TAX = 20
+
+  def initialize(balance = BALANCE)
     super
   end
 
   def withdraw_tax_percent
-    5
+    WITHDRAW_TAX
   end
 
   def put_tax_percent
-    2
+    PUT_TAX
   end
 
   def sender_tax_fixed
-    20
+    SENDER_TAX
   end
 end

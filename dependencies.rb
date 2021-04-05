@@ -2,9 +2,7 @@ require 'yaml'
 require 'pry'
 require 'i18n'
 
-I18n.load_path << Dir["#{File.expand_path('config/locales', __dir__)}/*.yml"]
-I18n.default_locale = :en
-
+require_relative 'config/i18n'
 require_relative 'helpers/console_helper'
 require_relative 'helpers/account_inputs'
 require_relative 'helpers/card_inputs'

@@ -1,17 +1,22 @@
 class CapitalistCard < BaseCard
-  def initialize(balance = 100.00)
+  BALANCE = 100.0
+  WITHDRAW_TAX = 4
+  PUT_TAX = 10
+  SENDER_TAX = 10
+
+  def initialize(balance = BALANCE)
     super
   end
 
   def withdraw_tax_percent
-    4
+    WITHDRAW_TAX
   end
 
   def put_tax_fixed
-    10
+    PUT_TAX
   end
 
   def sender_tax_percent
-    10
+    SENDER_TAX
   end
 end
