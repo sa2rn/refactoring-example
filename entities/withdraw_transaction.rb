@@ -8,7 +8,7 @@ class WithdrawTransation < BaseTransaction
 
   def validate
     if !@amount.positive?
-      errors << I18n.t('error.correct_amount')
+      errors << I18n.t('error.invalid_amount')
     elsif !new_balance.positive?
       errors << I18n.t('error.tax_higher')
     end

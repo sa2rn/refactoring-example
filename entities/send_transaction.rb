@@ -20,7 +20,7 @@ class SendTransaction < BaseTransaction
   end
 
   def validate_amount
-    errors << I18n.t('error.correct_amount') unless @amount.positive?
+    errors << I18n.t('error.invalid_amount') unless @amount.positive?
     errors.empty?
   end
 

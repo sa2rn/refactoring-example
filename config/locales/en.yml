@@ -53,7 +53,7 @@ en:
       Wrong card type. Try again!
     wrong_number: |
       You entered wrong number!
-    correct_amount: You must input correct amount of money
+    invalid_amount: You must input correct amount of money
     tax_higher: Your tax is higher than input amount
     no_card_with_number: |
       There is no card with number %{number}

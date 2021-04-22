@@ -1,12 +1,12 @@
-class AccountConsole
-  FILE_PATH = File.expand_path('accounts.yml', __dir__)
+class Console
+  DB_PATH = File.expand_path('accounts.yml', __dir__)
 
   include ConsoleHelper
   include AccountInputs
   include CardInputs
 
   def initialize
-    @file_path = FILE_PATH
+    @db_path = DB_PATH
   end
 
   def console
@@ -50,7 +50,7 @@ class AccountConsole
   end
 
   def show_cards
-    any_cards?(@current_account) { @current_account.card.each { |card| puts "- #{card.number}, #{card.type}" } }
+    any_cards?(@current_account) { @current_account.cards.each { |card| puts "- #{card.number}, #{card.type}" } }
   end
 
   def withdraw_money
@@ -92,6 +92,6 @@ class AccountConsole
   end
 
   def store
-    @store ||= YamlStore.new(@file_path)
+    @store ||= YamlStore.new(@db_path)
   end
 end

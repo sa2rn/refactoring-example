@@ -1,3 +1,3 @@
 require_relative 'dependencies'
 
-AccountConsole.new.console
+Console.new.console

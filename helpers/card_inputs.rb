@@ -68,8 +68,8 @@ module CardInputs
   end
 
   def prints_cards_to_choose(account)
-    account.card.each_with_index do |card, index|
-      output('common.press_to_choose', number: card.number, type: card.type, index: index + 1)
+    account.cards.each_with_index do |card, index|
+      output('common.press_to_choose', number: card.number, type: card.type, index: index.next)
     end
     output('common.press_exit')
   end
@@ -81,6 +81,6 @@ module CardInputs
   end
 
   def any_cards?(account)
-    account.card.any? ? yield : output('error.no_active_cards')
+    account.cards.any? ? yield : output('error.no_active_cards')
   end
 end

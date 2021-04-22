@@ -35,4 +35,4 @@ require_relative 'entities/account'
 require_relative 'entities/card_type'
 require_relative 'entities/validation_errors'
 
-require_relative 'account_console'
+require_relative 'console'

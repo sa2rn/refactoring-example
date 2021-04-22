@@ -2,6 +2,8 @@ class ValidationErrors
   extend Forwardable
   include Enumerable
 
+  NEW_LINE = "\n".freeze
+
   def_delegators :@errors, :each, :empty?, :<<
 
   def initialize(errors = [])
@@ -9,6 +11,6 @@ class ValidationErrors
   end
 
   def to_s
-    @errors.join("\n")
+    @errors.join(NEW_LINE)
   end
 end

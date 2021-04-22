@@ -8,13 +8,13 @@ class DataManager
 
   def create_card(account, type)
     card = BaseCard.create(type)
-    account.card << card
+    account.cards << card
     update_account(account)
     card
   end
 
   def destroy_card(account, card)
-    account.card.delete(card)
+    account.cards.delete(card)
     update_account(account)
   end
 
@@ -41,8 +41,8 @@ class DataManager
 
   def update_card(new_card)
     new_accounts = accounts.map do |account|
-      if account.card.any? { |card| card.number == new_card.number }
-        account.card.map! { |card| card.number == new_card.number ? new_card : card }
+      if account.cards.any? { |card| card.number == new_card.number }
+        account.cards.map! { |card| card.number == new_card.number ? new_card : card }
       end
       account
     end
@@ -86,6 +86,6 @@ class DataManager
   end
 
   def all_cards
-    accounts.map(&:card).flatten
+    accounts.map(&:cards).flatten
   end
 end

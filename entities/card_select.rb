@@ -2,8 +2,8 @@ class CardSelect < ValidableEntity
   attr_reader :card_index
 
   def initialize(account, card_index)
-    @cards = account.card
-    @card_index = card_index.to_i - 1
+    @cards = account.cards
+    @card_index = card_index.to_i.pred
     @valid_range = 0...@cards.length
   end
 
