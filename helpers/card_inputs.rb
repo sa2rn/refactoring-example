@@ -1,23 +1,19 @@
 module CardInputs
   def withdraw_amount_input
-    output('common.withdraw_amount')
-    input.to_i
+    input('common.withdraw_amount').to_i
   end
 
   def put_amount_input
-    output('common.input_amount')
-    input.to_i
+    input('common.input_amount').to_i
   end
 
   def send_amount_input
-    output('common.send_amount')
-    input.to_i
+    input('common.send_amount').to_i
   end
 
   def card_type_input
     loop do
-      output('create_card')
-      card_type = CardType.new(handle_exit(input))
+      card_type = CardType.new(input_with_exit('create_card'))
       if card_type.valid?
         yield card_type.type
         return
@@ -29,7 +25,7 @@ module CardInputs
   def card_input(account)
     prints_cards_to_choose(account)
     loop do
-      card_select = CardSelect.new(account, handle_exit(input))
+      card_select = CardSelect.new(account, input_with_exit)
       if card_select.valid?
         yield card_select.card
         return
@@ -42,7 +38,8 @@ module CardInputs
     any_cards?(account) { card_input(account, &block) }
   end
 
-  def handle_exit(answer)
+  def input_with_exit(*args, **kwargs)
+    answer = input(*args, **kwargs)
     leave_loop if exit?(answer)
     answer
   end

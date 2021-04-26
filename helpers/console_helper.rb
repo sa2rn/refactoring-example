@@ -7,15 +7,15 @@ module ConsoleHelper
   end
 
   def confirm?(*args, **kwargs)
-    output(*args, **kwargs)
-    input == CONFIRM_YES
+    input(*args, **kwargs) == CONFIRM_YES
   end
 
   def leave_loop
     raise StopIteration
   end
 
-  def input
+  def input(*args, **kwargs)
+    output(*args, **kwargs) unless args.empty?
     gets.chomp
   end
 

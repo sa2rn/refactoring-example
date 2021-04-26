@@ -1,22 +1,18 @@
 module AccountInputs
   def login_input
-    output('ask.login')
-    input
+    input('ask.login')
   end
 
   def password_input
-    output('ask.password')
-    input
+    input('ask.password')
   end
 
   def name_input
-    output('ask.name')
-    input
+    input('ask.name')
   end
 
   def age_input
-    output('ask.age')
-    input.to_i
+    input('ask.age').to_i
   end
 
   def account_form_data
